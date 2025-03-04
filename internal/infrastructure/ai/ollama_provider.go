@@ -14,10 +14,11 @@ import (
 
 // OllamaProvider is a implementation of AIProvider interface for Ollama
 type OllamaProvider struct {
-	baseURL     string
-	model       string
-	client      *api.Client
-	maxDiffSize int
+	baseURL         string
+	model           string
+	client          *api.Client
+	maxDiffSize     int
+	promptGenerator services.PromptGenerator
 }
 
 // NewOllamaProvider creates a new instance of OllamaProvider
@@ -25,6 +26,7 @@ func NewOllamaProvider(
 	baseURL string,
 	model string,
 	maxDiffSize int,
+	promptGenerator services.PromptGenerator,
 ) (*OllamaProvider, error) {
 	parsedUrl, err := url.Parse(baseURL)
 	if err != nil {
@@ -33,31 +35,16 @@ func NewOllamaProvider(
 	httpClient := &http.Client{}
 	client := api.NewClient(parsedUrl, httpClient)
 	return &OllamaProvider{
-		baseURL:     baseURL,
-		model:       model,
-		client:      client,
-		maxDiffSize: maxDiffSize,
+		baseURL:         baseURL,
+		model:           model,
+		client:          client,
+		maxDiffSize:     maxDiffSize,
+		promptGenerator: promptGenerator,
 	}, nil
 }
 
 func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []string) (string, error) {
-	if len(diff) > p.maxDiffSize {
-		diff = diff[:p.maxDiffSize] + "\n[diff truncated...]"
-	}
-
-	fileStr := strings.Join(changedFiles, ",")
-
-	prompt := fmt.Sprintf(
-		"Generates a commit message in conventional format for the following changes.\n\n"+
-			"Files modified: %s\n\n"+
-			"Diff:\n%s\n\n"+
-			"Format: <type>(<scope>): <description>\n\n"+
-			"Where <type> is one of the following: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert\n"+
-			"<scope> is optional and represents the affected part of the code\n "+
-			"<description> is a short description of the modifications\n\n",
-		fileStr,
-		diff,
-	)
+	prompt := p.promptGenerator.GenerateCommitPrompt(diff, changedFiles, p.maxDiffSize)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
