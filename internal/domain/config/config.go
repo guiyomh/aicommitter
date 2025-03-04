@@ -1,4 +1,4 @@
-package domain
+package config
 
 // CommitType represents a commit type with its emoji and description
 type CommitType struct {
@@ -12,7 +12,14 @@ type Config struct {
 	Git struct {
 		DefaultCommitStyle string                `mapstructure:"default_commit_style"`
 		CommitTypes        map[string]CommitType `mapstructure:"commit_types"`
+		MaxDiffSize        int                   `mapstructure:"max_diff_size"`
 	} `mapstructure:"git"`
+	AI struct {
+		Provider string `mapstructure:"provider"`
+		Model    string `mapstructure:"model"`
+		BaseURL  string `mapstructure:"base_url"`
+		APIKey   string `mapstructure:"api_key"`
+	} `mapstructure:"ai"`
 	Log struct {
 		Level string `mapstructure:"level"`
 	} `mapstructure:"log"`

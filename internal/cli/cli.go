@@ -10,7 +10,7 @@ import (
 
 func New() *cobra.Command {
 	root := &cobra.Command{
-		Use:   "aicommiter",
+		Use:   "aicommitter",
 		Short: "AI-powered commit message generator",
 	}
 

@@ -3,30 +3,37 @@ package commands
 import (
 	"fmt"
 
-	"github.com/guiyomh/aicommitter/internal/domain"
-	"github.com/guiyomh/aicommitter/internal/domain/services"
+	"github.com/guiyomh/aicommitter/internal/domain/config"
+	"github.com/guiyomh/aicommitter/internal/domain/usecases"
 	"github.com/spf13/cobra"
 )
 
-func CommitCommand(diffService *services.DiffService, cfg *domain.Config) *cobra.Command {
+func CommitCommand(
+	generateCommitMessage *usecases.GenerateCommitMessage,
+	cfg *config.Config,
+) *cobra.Command {
+
+	var staged bool
+
 	commit := &cobra.Command{
 		Use:   "commit",
 		Short: "Commit a model",
 		RunE: func(_ *cobra.Command, _ []string) error {
-			diff, err := diffService.GetStagedDiff()
+
+			commitMessage, err := generateCommitMessage.Execute(staged)
+
 			if err != nil {
-				return fmt.Errorf("erreur lors de la récupération des modifications : %w", err)
+				return fmt.Errorf("error while generating commit message: %w", err)
 			}
 
-			// Afficher le diff (vous pouvez faire d'autres opérations ici)
-			fmt.Println("Modifications à commiter :")
-			fmt.Println(diff)
-
-			fmt.Println("Niveau de log :")
-			fmt.Println(cfg.Log.Level)
+			fmt.Println("Message de commit généré :")
+			fmt.Println(commitMessage)
 
 			return nil
 		},
 	}
+
+	commit.Flags().BoolVarP(&staged, "staged", "s", true, "Uses only changes already added (staging)")
+
 	return commit
 }
