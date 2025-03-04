@@ -9,4 +9,5 @@ import (
 var ProviderSet = wire.NewSet(
 	NewCommandExecutor,
 	wire.Bind(new(utils.Executor), new(*CommandExecutor)),
+	LoadConfig,
 )

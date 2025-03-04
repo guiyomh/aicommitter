@@ -11,12 +11,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// InitializeCommitCommand initialise la commande commit avec ses dépendances
-func CommitCommand() *cobra.Command {
+// InitializeCommitCommand initializes the commit command with its dependencies
+func CommitCommand() (*cobra.Command, error) {
 	wire.Build(
 		infrastructure.ProviderSet,
 		domain.ProviderSet,
 		commands.CommitCommand,
+	)
+	return nil, nil
+}
+
+// InitializeInitConfigCommand initializes the init-config command with its dependencies
+func InitConfigCommand() *cobra.Command {
+	wire.Build(
+		commands.InitConfigCommand,
 	)
 	return nil
 }
