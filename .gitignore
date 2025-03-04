@@ -1,0 +1,65 @@
+# Binaires compilés pour différents OS et architectures
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+aicommitter
+
+# Fichiers binaires de test
+*.test
+
+# Fichiers de sortie de coverage
+*.out
+*.prof
+coverage.html
+
+# Fichiers générés par Wire
+*_gen.go
+wire_gen.go
+
+# Fichiers de dépendances
+/vendor/
+
+# Fichiers de configuration de l'IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+
+# Fichiers macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Fichiers de logs
+*.log
+
+# Fichiers temporaires
+tmp/
+.tmp/
+.temp/
+*~
+
+# Fichiers de configuration de l'environnement
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Fichiers de cache Go
+/go.work
+.godeps/
+
+# Dossier des modules Go
+/go-packages/
+
+# Répertoires de build
+/dist/
+/build/
+/.task/
