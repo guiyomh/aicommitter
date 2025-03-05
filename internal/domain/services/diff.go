@@ -22,7 +22,17 @@ func NewDiffService(executor utils.Executor) *DiffService {
 
 // GetDiff returns the git diff for the current changes
 func (s *DiffService) GetDiff() (string, error) {
-	output, err := s.executor.Execute(context.Background(), "git", "diff")
+	env := map[string]string{
+		"GIT_PAGER": "cat",
+	}
+	output, err := s.executor.ExecuteWithEnv(context.Background(),
+		env,
+		"git",
+		"diff",
+		"--diff-algorithm=minimal",
+		":(exclude)*.lock",
+		":(exclude)*.sum",
+	)
 	if err != nil {
 		return "", errors.New("failed to get git diff: " + err.Error())
 	}
@@ -31,7 +41,18 @@ func (s *DiffService) GetDiff() (string, error) {
 
 // GetStagedDiff returns the git diff for staged changes
 func (s *DiffService) GetStagedDiff() (string, error) {
-	output, err := s.executor.Execute(context.Background(), "git", "diff", "--staged")
+	env := map[string]string{
+		"GIT_PAGER": "cat",
+	}
+	output, err := s.executor.ExecuteWithEnv(context.Background(),
+		env,
+		"git",
+		"diff",
+		"--staged",
+		"--diff-algorithm=minimal",
+		":(exclude)*.lock",
+		":(exclude)*.sum",
+	)
 	if err != nil {
 		return "", errors.New("failed to get staged git diff: " + err.Error())
 	}

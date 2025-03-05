@@ -27,10 +27,10 @@ func InitConfigCommand() *cobra.Command {
 				if err := os.MkdirAll(configPath, 0755); err != nil {
 					return fmt.Errorf("could not create configuration directory %s: %w", configPath, err)
 				}
-				configPath = filepath.Join(configPath, "aicommitter.yaml")
+				configPath = filepath.Join(configPath, ".aicommitter.yaml")
 
 			} else {
-				configPath = "aicommitter.yaml"
+				configPath = ".aicommitter.yaml"
 			}
 
 			if _, err := os.Stat(configPath); err == nil && !force {

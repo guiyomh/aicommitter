@@ -33,7 +33,7 @@ func CommitCommand(
 		},
 	}
 
-	commit.Flags().BoolVarP(&staged, "staged", "s", true, "Uses only changes already added (staging)")
+	commit.Flags().BoolVarP(&staged, "staged", "s", false, "Uses only changes already added (staging)")
 
 	return commit
 }

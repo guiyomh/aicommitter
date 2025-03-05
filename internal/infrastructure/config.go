@@ -14,7 +14,7 @@ func LoadConfig() (*config.Config, error) {
 
 	// Configuration des sources et format
 	// Correction du nom de fichier : aicommiter -> aicommitter
-	v.SetConfigName("aicommitter")
+	v.SetConfigName(".aicommitter")
 	v.SetConfigType("yaml")
 
 	// Ajout de plus de chemins de recherche pour la configuration
@@ -52,7 +52,7 @@ func WriteDefaultConfig(path string) error {
 
 	setDefaultValues(v)
 
-	v.SetConfigName("aicommitter")
+	v.SetConfigName(".aicommitter")
 	v.SetConfigType("yaml")
 
 	err := v.WriteConfigAs(path)
@@ -129,7 +129,7 @@ func setDefaultValues(v *viper.Viper) {
 
 	// Configuration AI
 	v.SetDefault("ai.provider", "ollama")
-	v.SetDefault("ai.model", "llama2")
+	v.SetDefault("ai.model", "mistral")
 	v.SetDefault("ai.base_url", "http://localhost:11434")
 	v.SetDefault("ai.api_key", "")
 

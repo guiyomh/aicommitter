@@ -11,5 +11,5 @@ var ProviderSet = wire.NewSet(
 	services.NewDiffService,
 	usecases.NewGenerateCommitMessage,
 	services.NewDefaultPromptGenerator,
-	wire.Bind(new(services.PromptGenerator), new(*services.DefaultPromptGenerator)),
+	wire.Bind(new(services.PromptGenerator), new(*services.ConventionalPromptGenerator)),
 )
