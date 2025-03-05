@@ -24,4 +24,6 @@ var ProviderSet = wire.NewSet(
 	LoadConfig,
 	NewOllamaProvider,
 	wire.Bind(new(services.AIProvider), new(*ai.OllamaProvider)),
+	NewLogger,
+	wire.Bind(new(utils.Logger), new(*ZerologLogger)),
 )
