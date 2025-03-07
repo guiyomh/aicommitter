@@ -1,11 +1,14 @@
 package infrastructure
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/guiyomh/aicommitter/internal/domain/config"
 	"github.com/spf13/viper"
 )
+
+const defaultMaxDiffSize = 10000
 
 func LoadConfig() (*config.Config, error) {
 	v := viper.New()
@@ -31,7 +34,8 @@ func LoadConfig() (*config.Config, error) {
 		fmt.Println("Using config file:", configFile)
 	} else {
 		// Ajouter un log pour l'erreur de lecture de configuration
-		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+		var configFileNotFound viper.ConfigFileNotFoundError
+		if errors.As(err, &configFileNotFound) {
 			fmt.Println("No config file found, using defaults")
 		} else {
 			fmt.Printf("Error reading config file: %v\n", err)
@@ -65,7 +69,6 @@ func WriteDefaultConfig(path string) error {
 
 // setDefaultValues définit les valeurs par défaut pour la configuration
 func setDefaultValues(v *viper.Viper) {
-
 	// Configuration Git
 	v.SetDefault("git.default_commit_style", "conventional")
 	v.SetDefault("git.commit_types", map[string]interface{}{
@@ -85,9 +88,10 @@ func setDefaultValues(v *viper.Viper) {
 			"emoji":       "📚",
 		},
 		"style": map[string]string{
-			"title":       "Styles",
-			"description": "Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)",
-			"emoji":       "💎",
+			"title": "Styles",
+			"description": "Changes that do not affect the meaning of the code" +
+				" (white-space, formatting, missing semi-colons, etc)",
+			"emoji": "💎",
 		},
 		"refactor": map[string]string{
 			"title":       "Code Refactoring",
@@ -125,7 +129,7 @@ func setDefaultValues(v *viper.Viper) {
 			"emoji":       "🗑",
 		},
 	})
-	v.SetDefault("git.max_diff_size", 10000)
+	v.SetDefault("git.max_diff_size", defaultMaxDiffSize)
 
 	// Configuration AI
 	v.SetDefault("ai.provider", "ollama")

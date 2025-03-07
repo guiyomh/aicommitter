@@ -28,24 +28,24 @@ func (g *ConventionalPromptGenerator) GenerateCommitPrompt(diff string, changedF
 
 	fileStr := strings.Join(changedFiles, ",")
 
-	return `Tu es un assistant spécialisé dans la génération de messages de commit au format Conventional Commits. 
+	return `You are an assistant specialized in generating commit messages following the Conventional Commits format.
 
-# Objectif
-Générer un message de commit descriptif, clair et concis qui suit strictement la spécification Conventional Commits.
+# Objective
+Generate a descriptive, clear and concise commit message that strictly follows the Conventional Commits specification.
 
-# Contexte du Commit
+# Commit Context
 
-- Diff Git: 
+- Git Diff:
 
 ` + "```\n" + diff + "\n```" + `
 
-- Fichiers impactés: ` + fileStr + `
+- Impacted files: ` + fileStr + `
 
-# Contraintes et Instructions
+# Constraints and Instructions
 
-## Format du Commit
+## Commit Format
 
-Le message DOIT suivre le format :
+The message MUST follow the format:
 
 ` + "```" + `
 <type>[optional scope]: <description>
@@ -55,11 +55,11 @@ Le message DOIT suivre le format :
 [optional footer(s)]
 ` + "```" + `
 
-## Règles de Génération
+## Generation Rules
 
-1. Choix du Type de Commit
+1. Commit Type Choice
 
-- Utiliser l'un des types standard :
+- Use one of the standard types:
 
   - ` + strings.Join(
 		lo.Map(
@@ -71,28 +71,28 @@ Le message DOIT suivre le format :
 		"\n  - ",
 	) + `
 
-2. Scope (Optionnel)
+2. Scope (Optional)
 
-- Indiquer le composant/module/fichier principalement affecté
-- Sera limité à une portée technique ou fonctionnelle
+- Indicate the main affected component/module/file
+- Limited to technical or functional scope
 
 3. Description
 
-- Courte (< 50 caractères)
-- Impérative, style "Ajouter/Corriger/Modifier..."
-- Commencer par une lettre minuscule
-- Pas de point final
+- Short (< 50 characters)
+- Imperative mood, like "Add/Fix/Modify..."
+- Start with lowercase letter
+- No trailing period
 
-4. Corps du Message (Optionnel)
+4. Message Body (Optional)
 
-- Explication plus détaillée si nécessaire
-- Motivation du changement
-- Différences avec l'état précédent
+- More detailed explanation if needed
+- Motivation for the change
+- Differences from previous state
 
-5. Pieds de Page (Optionnel)
+5. Footer(s) (Optional)
 
-- Références d'issues (ex: "Fixes #123")
-- Méta-informations
+- Issue references (e.g. "Fixes #123")
+- Meta information
 ` +
 
 		// # Paramètres Spécifiques Fournis
@@ -103,21 +103,21 @@ Le message DOIT suivre le format :
 		// - Langue du message : {langue}
 
 		`
-# Consignes Supplémentaires
+# Additional Instructions
 
-- Soyez concis et précis
-- Utilisez le contexte du diff pour comprendre les changements
-- Si aucun type n'est évident, choisissez le plus approprié
-- En cas de doute, préférez refactor ou chore
+- Be concise and precise
+- Use the diff context to understand the changes
+- If no type is obvious, choose the most appropriate one
+- When in doubt, prefer refactor or chore
 
-# Format de Réponse
-Répondez UNIQUEMENT avec le message de commit, sans aucun texte supplémentaire.
-Le message DOIT être facilement parsable, donc :
+# Response Format
+Reply ONLY with the commit message, without any additional text.
+The message MUST be easily parsable, so:
 
-- Utilisez un délimiteur clair comme ---COMMIT_MESSAGE_START--- et ---COMMIT_MESSAGE_END---
-- Incluez des métadonnées parsables
+- Use clear delimiters like ---COMMIT_MESSAGE_START--- and ---COMMIT_MESSAGE_END---
+- Include parsable metadata
 
-Exemple de format de réponse :
+Example response format:
 
 ` + "```" + `
 ---COMMIT_MESSAGE_START---
@@ -125,7 +125,8 @@ Exemple de format de réponse :
   "type": "feat",
   "scope": "authentication",
   "description": "add login with google oauth",
-  "body": "Implement Google OAuth integration for user authentication\nAdds support for Google sign-in on the login page",
+  "body": "Implement Google OAuth integration for user authentication\n` +
+		`Adds support for Google sign-in on the login page",
   "footer": "Fixes #456"
 }
 ---COMMIT_MESSAGE_END---

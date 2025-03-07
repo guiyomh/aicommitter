@@ -2,6 +2,7 @@ package commands
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 
@@ -16,7 +17,7 @@ func InitConfigCommand() *cobra.Command {
 	init := &cobra.Command{
 		Use:   "init",
 		Short: "Initializes application configuration",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(_ *cobra.Command, _ []string) error {
 			var configPath string
 			if globalConfig {
 				homedir, err := os.UserHomeDir()
@@ -24,11 +25,10 @@ func InitConfigCommand() *cobra.Command {
 					return fmt.Errorf("could not get home directory: %w", err)
 				}
 				configPath = filepath.Join(homedir, ".config", "aicommitter")
-				if err := os.MkdirAll(configPath, 0755); err != nil {
+				if err := os.MkdirAll(configPath, fs.ModePerm); err != nil {
 					return fmt.Errorf("could not create configuration directory %s: %w", configPath, err)
 				}
 				configPath = filepath.Join(configPath, ".aicommitter.yaml")
-
 			} else {
 				configPath = ".aicommitter.yaml"
 			}
@@ -47,7 +47,12 @@ func InitConfigCommand() *cobra.Command {
 	}
 
 	init.Flags().BoolVarP(&force, "force", "f", false, "Overwrite existing configuration file")
-	init.Flags().BoolVarP(&globalConfig, "global", "g", false, "Create configuration in $HOME/.config/ rather than in the current directory")
+	init.Flags().BoolVarP(
+		&globalConfig, "global",
+		"g",
+		false,
+		"Create configuration in $HOME/.config/ rather than in the current directory",
+	)
 
 	return init
 }

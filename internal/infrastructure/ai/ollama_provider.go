@@ -13,6 +13,8 @@ import (
 	"github.com/ollama/ollama/api"
 )
 
+const requestTimeout = 30 * time.Second
+
 // OllamaProvider is a implementation of AIProvider interface for Ollama
 type OllamaProvider struct {
 	baseURL         string
@@ -31,12 +33,12 @@ func NewOllamaProvider(
 	promptGenerator services.PromptGenerator,
 	log utils.Logger,
 ) (*OllamaProvider, error) {
-	parsedUrl, err := url.Parse(baseURL)
+	parsedURL, err := url.Parse(baseURL)
 	if err != nil {
 		return nil, err
 	}
 	httpClient := &http.Client{}
-	client := api.NewClient(parsedUrl, httpClient)
+	client := api.NewClient(parsedURL, httpClient)
 	return &OllamaProvider{
 		baseURL:         baseURL,
 		model:           model,
@@ -50,7 +52,7 @@ func NewOllamaProvider(
 func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []string) (string, error) {
 	prompt := p.promptGenerator.GenerateCommitPrompt(diff, changedFiles, p.maxDiffSize)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
 	p.log.Debug("Generating commit message with Ollama: %s", prompt)

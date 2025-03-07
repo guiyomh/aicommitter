@@ -60,7 +60,7 @@ tasks:
     desc: Installs golangci-lint
     internal: true
     vars:
-      GOLANGCI_LINT_VERSION: v1.60.3
+      GOLANGCI_LINT_VERSION: v1.64.6
     env:
       GOBIN: "{{.BIN}}"
     status:
@@ -96,8 +96,8 @@ tasks:
       - .golangci.yml
     cmds:
       - "{{.BIN}}/golangci-lint run --fix"
-  
-  wire: 
+
+  wire:
     desc: Runs wire
     aliases: [w]
     cmds:
@@ -122,7 +122,7 @@ tasks:
       - .env
     cmds:
       - aicommitter
-  
+
   mocks:generate:
     desc: generate mock files
     cmds:

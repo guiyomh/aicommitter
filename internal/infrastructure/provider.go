@@ -8,7 +8,11 @@ import (
 	"github.com/guiyomh/aicommitter/internal/infrastructure/ai"
 )
 
-func NewOllamaProvider(config *config.Config, promptGenerator services.PromptGenerator, log utils.Logger) (*ai.OllamaProvider, error) {
+func NewOllamaProvider(
+	config *config.Config,
+	promptGenerator services.PromptGenerator,
+	log utils.Logger,
+) (*ai.OllamaProvider, error) {
 	return ai.NewOllamaProvider(
 		config.AI.BaseURL,
 		config.AI.Model,

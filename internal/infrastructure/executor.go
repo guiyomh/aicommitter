@@ -23,7 +23,7 @@ func NewCommandExecutor(logger utils.Logger) *CommandExecutor {
 }
 
 // Execute exécute une commande avec ses arguments et retourne la sortie
-func (e *CommandExecutor) Execute(ctx context.Context, cmd string, args ...string) (string, error) {
+func (*CommandExecutor) Execute(ctx context.Context, cmd string, args ...string) (string, error) {
 	command := exec.CommandContext(ctx, cmd, args...)
 	output, err := command.CombinedOutput()
 	return strings.TrimSpace(string(output)), err
@@ -31,7 +31,12 @@ func (e *CommandExecutor) Execute(ctx context.Context, cmd string, args ...strin
 
 // ExecuteWithEnv exécute une commande avec des variables d'environnement spécifiées
 // et retourne la sortie
-func (e *CommandExecutor) ExecuteWithEnv(ctx context.Context, env map[string]string, cmd string, args ...string) (string, error) {
+func (e *CommandExecutor) ExecuteWithEnv(
+	ctx context.Context,
+	env map[string]string,
+	cmd string,
+	args ...string,
+) (string, error) {
 	command := exec.CommandContext(ctx, cmd, args...)
 
 	// Récupérer l'environnement actuel

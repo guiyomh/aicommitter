@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ZerologLogger est une implémentation de l'interface Logger utilisant zerolog
+// ZerologLogger is an implementation of the Logger interface using zerolog
 type ZerologLogger struct{}
 
-// NewLogger configure et crée une nouvelle instance de ZerologLogger
+// NewLogger configures and creates a new instance of ZerologLogger
 func NewLogger(config *config.Config) *ZerologLogger {
 	// Configurer zerolog
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -31,32 +31,32 @@ func NewLogger(config *config.Config) *ZerologLogger {
 	return &ZerologLogger{}
 }
 
-// Debug enregistre un message de niveau debug
-func (l *ZerologLogger) Debug(msg string, args ...interface{}) {
+// Debug records a debug level message
+func (*ZerologLogger) Debug(msg string, args ...interface{}) {
 	log.Debug().Msg(formatMessage(msg, args...))
 }
 
-// Info enregistre un message de niveau info
-func (l *ZerologLogger) Info(msg string, args ...interface{}) {
+// Info records an info level message
+func (*ZerologLogger) Info(msg string, args ...interface{}) {
 	log.Info().Msg(formatMessage(msg, args...))
 }
 
-// Warn enregistre un message de niveau warn
-func (l *ZerologLogger) Warn(msg string, args ...interface{}) {
+// Warn records a warn level message
+func (*ZerologLogger) Warn(msg string, args ...interface{}) {
 	log.Warn().Msg(formatMessage(msg, args...))
 }
 
-// Error enregistre un message de niveau error
-func (l *ZerologLogger) Error(msg string, args ...interface{}) {
+// Error records an error level message
+func (*ZerologLogger) Error(msg string, args ...interface{}) {
 	log.Error().Msg(formatMessage(msg, args...))
 }
 
-// Fatal enregistre un message de niveau fatal puis termine le programme
-func (l *ZerologLogger) Fatal(msg string, args ...interface{}) {
+// Fatal records a fatal level message, then terminates the program
+func (*ZerologLogger) Fatal(msg string, args ...interface{}) {
 	log.Fatal().Msg(formatMessage(msg, args...))
 }
 
-// formatMessage formate le message si des arguments sont fournis
+// formatMessage formats the message if arguments are supplied
 func formatMessage(msg string, args ...interface{}) string {
 	if len(args) > 0 {
 		return fmt.Sprintf(msg, args...)
@@ -64,5 +64,5 @@ func formatMessage(msg string, args ...interface{}) string {
 	return msg
 }
 
-// Vérification statique que ZerologLogger implémente bien l'interface Logger
+// Check static that ZerologLogger implements the Logger interface
 var _ utils.Logger = (*ZerologLogger)(nil)
