@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/guiyomh/aicommitter/internal/domain/services"
+	"github.com/guiyomh/aicommitter/internal/domain/utils"
 	"github.com/ollama/ollama/api"
 )
 
@@ -19,6 +20,7 @@ type OllamaProvider struct {
 	client          *api.Client
 	maxDiffSize     int
 	promptGenerator services.PromptGenerator
+	log             utils.Logger
 }
 
 // NewOllamaProvider creates a new instance of OllamaProvider
@@ -27,6 +29,7 @@ func NewOllamaProvider(
 	model string,
 	maxDiffSize int,
 	promptGenerator services.PromptGenerator,
+	log utils.Logger,
 ) (*OllamaProvider, error) {
 	parsedUrl, err := url.Parse(baseURL)
 	if err != nil {
@@ -40,6 +43,7 @@ func NewOllamaProvider(
 		client:          client,
 		maxDiffSize:     maxDiffSize,
 		promptGenerator: promptGenerator,
+		log:             log,
 	}, nil
 }
 
@@ -48,6 +52,8 @@ func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []strin
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
+
+	p.log.Debug("Generating commit message with Ollama: %s", prompt)
 
 	var commitMessage string
 

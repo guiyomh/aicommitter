@@ -1,9 +1,11 @@
 package services
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/guiyomh/aicommitter/internal/domain/config"
+	"github.com/samber/lo"
 )
 
 // ConventionalPromptGenerator implémente l'interface PromptGenerator avec une logique par défaut
@@ -59,15 +61,15 @@ Le message DOIT suivre le format :
 
 - Utiliser l'un des types standard :
 
-  - feat: nouvelle fonctionnalité
-  - fix: correction de bug
-  - docs: modifications de documentation
-  - style: formatage, point-virgules manquants, etc.
-  - refactor: refactorisation du code
-  - test: ajout/modification de tests
-  - chore: maintenance, mises à jour de dépendances
-  - perf: amélioration des performances
-  - ci: modifications des configurations CI
+  - ` + strings.Join(
+		lo.Map(
+			lo.Keys(g.commitTypes),
+			func(key string, _ int) string {
+				return fmt.Sprintf("%s: %s", key, g.commitTypes[key].Description)
+			},
+		),
+		"\n  - ",
+	) + `
 
 2. Scope (Optionnel)
 

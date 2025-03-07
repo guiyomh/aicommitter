@@ -64,3 +64,6 @@ tmp/
 /build/
 /.build/
 /.task/
+
+# Fichiers de configuration de l'AI
+.aicommitter.yaml

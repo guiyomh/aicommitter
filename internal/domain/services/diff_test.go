@@ -16,7 +16,8 @@ func TestGetDiff(t *testing.T) {
 		// Arrange
 		mockExecutor := new(utils.MockExecutor)
 		expectedDiff := "diff --git a/file1 b/file1\nindex abc..def\n--- a/file1\n+++ b/file1"
-		mockExecutor.On("Execute", mock.Anything, "git", "diff").Return(expectedDiff, nil)
+		env := map[string]string{"GIT_PAGER": "cat"}
+		mockExecutor.On("ExecuteWithEnv", mock.Anything, env, "git", "diff", "--diff-algorithm=minimal", ":(exclude)*.lock", ":(exclude)*.sum").Return(expectedDiff, nil)
 
 		diffService := services.NewDiffService(mockExecutor)
 
@@ -33,7 +34,8 @@ func TestGetDiff(t *testing.T) {
 		// Arrange
 		mockExecutor := new(utils.MockExecutor)
 		expectedErr := errors.New("command failed")
-		mockExecutor.On("Execute", mock.Anything, "git", "diff").Return("", expectedErr)
+		env := map[string]string{"GIT_PAGER": "cat"}
+		mockExecutor.On("ExecuteWithEnv", mock.Anything, env, "git", "diff", "--diff-algorithm=minimal", ":(exclude)*.lock", ":(exclude)*.sum").Return("", expectedErr)
 
 		diffService := services.NewDiffService(mockExecutor)
 
@@ -53,7 +55,8 @@ func TestGetStagedDiff(t *testing.T) {
 		// Arrange
 		mockExecutor := new(utils.MockExecutor)
 		expectedDiff := "diff --git a/file1 b/file1\nindex abc..def\n--- a/file1\n+++ b/file1"
-		mockExecutor.On("Execute", mock.Anything, "git", "diff", "--staged").Return(expectedDiff, nil)
+		env := map[string]string{"GIT_PAGER": "cat"}
+		mockExecutor.On("ExecuteWithEnv", mock.Anything, env, "git", "diff", "--staged", "--diff-algorithm=minimal", ":(exclude)*.lock", ":(exclude)*.sum").Return(expectedDiff, nil)
 
 		diffService := services.NewDiffService(mockExecutor)
 
@@ -70,7 +73,8 @@ func TestGetStagedDiff(t *testing.T) {
 		// Arrange
 		mockExecutor := new(utils.MockExecutor)
 		expectedErr := errors.New("command failed")
-		mockExecutor.On("Execute", mock.Anything, "git", "diff", "--staged").Return("", expectedErr)
+		env := map[string]string{"GIT_PAGER": "cat"}
+		mockExecutor.On("ExecuteWithEnv", mock.Anything, env, "git", "diff", "--staged", "--diff-algorithm=minimal", ":(exclude)*.lock", ":(exclude)*.sum").Return("", expectedErr)
 
 		diffService := services.NewDiffService(mockExecutor)
 
@@ -135,6 +139,24 @@ func TestGetFilesChanged(t *testing.T) {
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "failed to get changed files")
 		assert.Nil(t, files)
+		mockExecutor.AssertExpectations(t)
+	})
+
+	t.Run("success with single file", func(t *testing.T) {
+		// Arrange
+		mockExecutor := new(utils.MockExecutor)
+		expectedOutput := "file1.go"
+		expectedFiles := []string{"file1.go"}
+		mockExecutor.On("Execute", mock.Anything, "git", "diff", "--name-only").Return(expectedOutput, nil)
+
+		diffService := services.NewDiffService(mockExecutor)
+
+		// Act
+		files, err := diffService.GetFilesChanged()
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Equal(t, expectedFiles, files)
 		mockExecutor.AssertExpectations(t)
 	})
 }

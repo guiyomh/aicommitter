@@ -20,43 +20,38 @@ func NewDiffService(executor utils.Executor) *DiffService {
 	}
 }
 
-// GetDiff returns the git diff for the current changes
-func (s *DiffService) GetDiff() (string, error) {
+// executeDiffCommand exécute la commande git diff avec les options spécifiées
+func (s *DiffService) executeDiffCommand(staged bool, args ...string) (string, error) {
 	env := map[string]string{
 		"GIT_PAGER": "cat",
 	}
-	output, err := s.executor.ExecuteWithEnv(context.Background(),
-		env,
-		"git",
-		"diff",
-		"--diff-algorithm=minimal",
-		":(exclude)*.lock",
-		":(exclude)*.sum",
-	)
+
+	cmdArgs := []string{"diff"}
+	if staged {
+		cmdArgs = append(cmdArgs, "--staged")
+	}
+	cmdArgs = append(cmdArgs, "--diff-algorithm=minimal", ":(exclude)*.lock", ":(exclude)*.sum")
+	cmdArgs = append(cmdArgs, args...)
+
+	output, err := s.executor.ExecuteWithEnv(context.Background(), env, "git", cmdArgs...)
 	if err != nil {
-		return "", errors.New("failed to get git diff: " + err.Error())
+		action := "get git diff"
+		if staged {
+			action = "get staged git diff"
+		}
+		return "", errors.New("failed to " + action + ": " + err.Error())
 	}
 	return output, nil
 }
 
+// GetDiff returns the git diff for the current changes
+func (s *DiffService) GetDiff() (string, error) {
+	return s.executeDiffCommand(false)
+}
+
 // GetStagedDiff returns the git diff for staged changes
 func (s *DiffService) GetStagedDiff() (string, error) {
-	env := map[string]string{
-		"GIT_PAGER": "cat",
-	}
-	output, err := s.executor.ExecuteWithEnv(context.Background(),
-		env,
-		"git",
-		"diff",
-		"--staged",
-		"--diff-algorithm=minimal",
-		":(exclude)*.lock",
-		":(exclude)*.sum",
-	)
-	if err != nil {
-		return "", errors.New("failed to get staged git diff: " + err.Error())
-	}
-	return output, nil
+	return s.executeDiffCommand(true)
 }
 
 // GetFilesChanged returns a list of files that have been changed
