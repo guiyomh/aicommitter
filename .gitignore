@@ -1,42 +1,69 @@
-# Binaries for programs and plugins
+# Binaires compilés pour différents OS et architectures
+/bin/
 *.exe
+*.exe~
 *.dll
 *.so
 *.dylib
 
-# Test binary, build with `go test -c`
+# Fichiers binaires de test
 *.test
 
-# Output of the go coverage tool, specifically when used with LiteIDE
+# Fichiers de sortie de coverage
 *.out
+*.prof
+coverage.html
+coverage.txt
 
-# Graphvis files
-*.gv
+# Fichiers générés par Wire
+*_gen.go
+wire_gen.go
 
-# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
-.glide/
+# Fichiers de dépendances
+/vendor/
 
-./task
-.task
-dist/
-
-.DS_Store
-
-# editors
+# Fichiers de configuration de l'IDE
 .idea/
-.vscode/*
-!.vscode/*-sample.json
-!.vscode/extensions.json
-.fleet/
+.vscode/
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
 
-# exuberant ctags
-tags
+# Fichiers macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
 
-/bin/*
-!/bin/.gitkeep
-/testdata/vars/v1
-/tmp
-node_modules
+# Fichiers de logs
+*.log
 
-# dotenv
+# Fichiers temporaires
+tmp/
+.tmp/
+.temp/
+*~
+
+# Fichiers de configuration de l'environnement
 .env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Fichiers de cache Go
+/go.work
+.godeps/
+
+# Dossier des modules Go
+/go-packages/
+
+# Répertoires de build
+/dist/
+/build/
+/.build/
+/.task/
+
+# Fichiers de configuration de l'AI
+.aicommitter.yaml

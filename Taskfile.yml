@@ -5,6 +5,7 @@ env:
 
 vars:
   BIN: "{{.ROOT_DIR}}/bin"
+  BUILD: "{{.ROOT_DIR}}/.build"
 
 tasks:
   # default:
@@ -18,19 +19,24 @@ tasks:
     sources:
       - "./**/*.go"
     cmds:
-      - go install -v ./
+      - task: wire
+      - go install -v ./cmd/aicommitter
 
   setup:
     desc: Install tools needed for development
     cmds:
       - task: install:mockery
       - task: install:golangci-lint
+      - task: install:gotestsum
+      - task: install:wire
+      - task: wire
+      - task: mocks:generate
 
   install:mockery:
     desc: Installs mockgen; a tool to generate mock files
     internal: true
     vars:
-      MOCKERY_VERSION: v2.24.0
+      MOCKERY_VERSION: v2.53.0
     env:
       GOBIN: "{{.BIN}}"
     status:
@@ -38,17 +44,41 @@ tasks:
     cmds:
       - go install github.com/vektra/mockery/v2@{{.MOCKERY_VERSION}}
 
+  install:gotestsum:
+    desc: Installs gotestsum; a test runner
+    internal: true
+    vars:
+      GOTESTSUM_VERSION: v1.12.0
+    env:
+      GOBIN: "{{.BIN}}"
+    status:
+      - go version -m {{.BIN}}/gotestsum | grep gotest.tools/gotestsum | grep {{.GOTESTSUM_VERSION}}
+    cmds:
+      - go install gotest.tools/gotestsum@{{.GOTESTSUM_VERSION}}
+
   install:golangci-lint:
     desc: Installs golangci-lint
     internal: true
     vars:
-      GOLANGCI_LINT_VERSION: v1.60.3
+      GOLANGCI_LINT_VERSION: v1.64.6
     env:
       GOBIN: "{{.BIN}}"
     status:
       - go version -m {{.BIN}}/golangci-lint | grep github.com/golangci/golangci-lint | grep {{.GOLANGCI_LINT_VERSION}}
     cmds:
       - go install github.com/golangci/golangci-lint/cmd/golangci-lint@{{.GOLANGCI_LINT_VERSION}}
+
+  install:wire:
+    desc: Installs wire; a code generation tool
+    internal: true
+    vars:
+      WIRE_VERSION: v0.6.0
+    env:
+      GOBIN: "{{.BIN}}"
+    status:
+      - go version -m {{.BIN}}/wire | grep github.com/google/wire | grep {{.WIRE_VERSION}}
+    cmds:
+      - go install github.com/google/wire/cmd/wire@{{.WIRE_VERSION}}
 
   lint:
     desc: Runs golangci-lint
@@ -67,12 +97,19 @@ tasks:
     cmds:
       - "{{.BIN}}/golangci-lint run --fix"
 
+  wire:
+    desc: Runs wire
+    aliases: [w]
+    cmds:
+      - "{{.BIN}}/wire ./internal"
+
   test:
     desc: Runs test suite
     aliases: [t]
     deps: [install]
     cmds:
-      - go test {{catLines .GO_PACKAGES}}
+      - "mkdir -p {{.BUILD}}"
+      - "{{.BIN}}/gotestsum --format testname -- -v -coverprofile={{.BUILD}}/coverage.txt {{catLines .GO_PACKAGES}}"
     vars:
       GO_PACKAGES:
         sh: go list ./...
@@ -85,3 +122,14 @@ tasks:
       - .env
     cmds:
       - aicommitter
+
+  mocks:generate:
+    desc: generate mock files
+    cmds:
+      - "{{.BIN}}/mockery"
+
+  mocks:remove:
+    desc: remove all mock files
+    cmds:
+      - find . -name '*_mock.go' -o -name 'mock_*_test.go' | xargs -r rm
+      - rm -rf internal/mocks/

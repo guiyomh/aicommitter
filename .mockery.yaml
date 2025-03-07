@@ -1,0 +1,25 @@
+with-expecter: True
+resolve-type-alias: False
+disable-version-string: True
+issue-845-fix: True
+log-level: info
+packages:
+    github.com/guiyomh/aicommitter/internal/domain/utils:
+        # place your package-specific config here
+        config:
+        interfaces:
+            # select the interfaces you want mocked
+            Executor:
+                config:
+                  dir: "internal/mocks/domain/utils"
+    github.com/guiyomh/aicommitter/internal/domain/services:
+        # place your package-specific config here
+        config:
+        interfaces:
+            # select the interfaces you want mocked
+            AIProvider:
+                config:
+                  dir: "internal/mocks/services"
+            PromptGenerator:
+                config:
+                  dir: "internal/mocks/services"
