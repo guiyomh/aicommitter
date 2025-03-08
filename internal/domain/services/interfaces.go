@@ -17,7 +17,7 @@ type CommitTypeProvider interface {
 
 // PromptTemplateGenerator defines the interface for prompt template generators
 type PromptTemplateGenerator interface {
-	GenerateTemplate(commitTypes []string) string
+	GenerateTemplate(commitTypes map[string]config.CommitType) string
 }
 
 // DiffFormatter defines the interface for diff formatters

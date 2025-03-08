@@ -1,7 +1,11 @@
 package services
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/guiyomh/aicommitter/internal/domain/config"
+	"github.com/samber/lo"
 )
 
 // ConventionTemplateGenerator implémente PromptTemplateGenerator
@@ -11,7 +15,7 @@ func NewConventionalTemplateGenerator() *ConventionTemplateGenerator {
 	return &ConventionTemplateGenerator{}
 }
 
-func (*ConventionTemplateGenerator) GenerateTemplate(commitTypes []string) string {
+func (*ConventionTemplateGenerator) GenerateTemplate(commitTypes map[string]config.CommitType) string {
 	return `You are an assistant specialized in generating commit messages following the Conventional Commits format.
 
 # Objective
@@ -42,9 +46,16 @@ The message MUST follow the format:
 ## Generation Rules
 
 1. Commit Type Choice
-
 - Use one of the standard types:
-  - ` + strings.Join(commitTypes, "\n  - ") + `
+ - ` + strings.Join(
+		lo.Map(
+			lo.Keys(commitTypes),
+			func(key string, _ int) string {
+				return fmt.Sprintf("%s: %s", key, commitTypes[key].Description)
+			},
+		),
+		"\n  - ",
+	) + `
 
 2. Scope (Optional)
 

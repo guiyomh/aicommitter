@@ -2,7 +2,7 @@ package services
 
 import "github.com/guiyomh/aicommitter/internal/domain/config"
 
-// DefaultCommitTypeProvider implémente CommitTypeProvider
+// DefaultCommitTypeProvider implements CommitTypeProvider
 type DefaultCommitTypeProvider struct {
 	config *config.Config
 }

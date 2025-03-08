@@ -2,8 +2,6 @@ package services
 
 import (
 	"fmt"
-
-	"github.com/samber/lo"
 )
 
 // ConventionalPromptGenerator implémente l'interface PromptGenerator
@@ -28,7 +26,7 @@ func NewConventionalPromptGenerator(
 
 // GenerateCommitPrompt génère un prompt pour la création de messages de commit
 func (g *ConventionalPromptGenerator) GenerateCommitPrompt(diff string, changedFiles []string, maxDiffSize int) string {
-	commitTypes := lo.Keys(g.typeProvider.GetCommitTypes())
+	commitTypes := g.typeProvider.GetCommitTypes()
 	formattedDiff := g.diffFormatter.FormatDiff(diff, maxDiffSize)
 	fileStr := g.diffFormatter.GetFileList(changedFiles)
 
