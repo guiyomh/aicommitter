@@ -10,6 +10,12 @@ import (
 var ProviderSet = wire.NewSet(
 	services.NewDiffService,
 	usecases.NewGenerateCommitMessage,
-	services.NewDefaultPromptGenerator,
+	services.NewConventionalPromptGenerator,
+	services.NewConventionalTemplateGenerator,
+	services.NewDefaultCommitTypeProvider,
+	services.NewDefaultDiffFormatter,
 	wire.Bind(new(services.PromptGenerator), new(*services.ConventionalPromptGenerator)),
+	wire.Bind(new(services.CommitTypeProvider), new(*services.DefaultCommitTypeProvider)),
+	wire.Bind(new(services.PromptTemplateGenerator), new(*services.ConventionTemplateGenerator)),
+	wire.Bind(new(services.DiffFormatter), new(*services.DefaultDiffFormatter)),
 )
