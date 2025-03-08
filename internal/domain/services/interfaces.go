@@ -7,7 +7,7 @@ import (
 // PromptGenerator defines the interface for prompt generators
 type PromptGenerator interface {
 	// GenerateCommitPrompt generates a commit prompt based on the given input
-	GenerateCommitPrompt(diff string, changedFiles []string, maxDiffSize int) string
+	GenerateCommitPrompt(maxDiffSize int) string
 }
 
 // CommitTypeProvider defines the interface for commit type providers
@@ -28,8 +28,11 @@ type DiffFormatter interface {
 	GetFileList(files []string) string
 }
 
+// AIResponse représente la réponse de l'IA
+type AIResponse string
+
 // AIProvider defines the interface for AI providers
 type AIProvider interface {
 	// GenerateCommitMessage generates a commit message based on the given input
-	GenerateCommitMessage(diff string, changedFiles []string) (string, error)
+	GenerateCommitMessage(diff string, changedFiles []string) (AIResponse, error)
 }

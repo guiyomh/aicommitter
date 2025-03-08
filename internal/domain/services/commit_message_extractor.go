@@ -1,7 +1,6 @@
 package services
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -57,38 +56,25 @@ func NewCommitMessageExtractor(opts ...Option) *CommitMessageExtractor {
 }
 
 // Extract extrait un message de commit à partir d'une réponse
-func (e *CommitMessageExtractor) Extract(response string) (*entities.CommitMessage, error) {
-	startIndex := strings.Index(response, startDelimiter)
-	if startIndex == -1 {
-		return nil, ErrMissingStartDelimiter
-	}
-
-	endIndex := strings.Index(response, endDelimiter)
-	if endIndex == -1 {
-		return nil, ErrMissingEndDelimiter
-	}
-
-	jsonStr := strings.TrimSpace(response[startIndex+len(startDelimiter) : endIndex])
-	var commit entities.CommitMessage
-	if err := json.Unmarshal([]byte(jsonStr), &commit); err != nil {
-		return nil, ErrInvalidJSON
-	}
-
-	// Validation des champs requis
-	if commit.Type == "" {
-		return nil, &ValidationError{Field: "type", Message: "le champ est requis"}
-	}
-	if commit.Description == "" {
-		return nil, &ValidationError{Field: "description", Message: "le champ est requis"}
-	}
+func (e *CommitMessageExtractor) Extract(response AIResponse) (*entities.CommitMessage, error) {
+	rawResponse := string(response)
 
 	// Validation du type de commit via le parser
-	_, err := e.parser.Parse(commit.String())
+	parsedCommit, err := e.parser.Parse(strings.TrimSpace(rawResponse))
 	if err != nil {
 		if conventionalcommit.IsValidationError(err) {
 			return nil, &ValidationError{Field: "type", Message: "type de commit invalide"}
 		}
 		return nil, err
+	}
+
+	commit := entities.CommitMessage{
+		Type:        string(parsedCommit.Type),
+		Scope:       parsedCommit.Scope,
+		Description: parsedCommit.Description,
+		Body:        parsedCommit.Body,
+		Footer:      parsedCommit.Footer,
+		Breaking:    parsedCommit.Breaking,
 	}
 
 	return &commit, nil

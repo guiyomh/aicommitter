@@ -2,11 +2,9 @@ package ai
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/guiyomh/aicommitter/internal/domain/services"
@@ -16,10 +14,11 @@ import (
 
 const (
 	requestTimeout         = 30 * time.Second
-	ollamaTemperature      = 0.8
+	ollamaTemperature      = 0.7
 	ollamaTopK             = 40
 	ollamaTopP             = 0.9
 	ollamaNumPredict       = 128
+	ollamaNumCtx           = 4096
 	ollamaRepeatPenalty    = 1.1
 	ollamaFrequencyPenalty = 1.1
 	ollamaPresencePenalty  = 0.0
@@ -27,12 +26,14 @@ const (
 
 // OllamaProvider is a implementation of AIProvider interface for Ollama
 type OllamaProvider struct {
-	baseURL         string
-	model           string
-	client          *api.Client
-	maxDiffSize     int
-	promptGenerator services.PromptGenerator
-	log             utils.Logger
+	baseURL            string
+	model              string
+	client             *api.Client
+	maxDiffSize        int
+	promptGenerator    services.PromptGenerator
+	log                utils.Logger
+	diffFormatter      services.DiffFormatter
+	commitTypeProvider services.CommitTypeProvider
 }
 
 // NewOllamaProvider creates a new instance of OllamaProvider
@@ -42,6 +43,8 @@ func NewOllamaProvider(
 	maxDiffSize int,
 	promptGenerator services.PromptGenerator,
 	log utils.Logger,
+	diffFormatter services.DiffFormatter,
+	commitTypeProvider services.CommitTypeProvider,
 ) (*OllamaProvider, error) {
 	parsedURL, err := url.Parse(baseURL)
 	if err != nil {
@@ -50,22 +53,27 @@ func NewOllamaProvider(
 	httpClient := &http.Client{}
 	client := api.NewClient(parsedURL, httpClient)
 	return &OllamaProvider{
-		baseURL:         baseURL,
-		model:           model,
-		client:          client,
-		maxDiffSize:     maxDiffSize,
-		promptGenerator: promptGenerator,
-		log:             log,
+		baseURL:            baseURL,
+		model:              model,
+		client:             client,
+		maxDiffSize:        maxDiffSize,
+		promptGenerator:    promptGenerator,
+		log:                log,
+		diffFormatter:      diffFormatter,
+		commitTypeProvider: commitTypeProvider,
 	}, nil
 }
 
-func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []string) (string, error) {
-	prompt := p.promptGenerator.GenerateCommitPrompt(diff, changedFiles, p.maxDiffSize)
+func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []string) (services.AIResponse, error) {
+	systemPrompt := p.promptGenerator.GenerateCommitPrompt(p.maxDiffSize)
+
+	formattedDiff := p.diffFormatter.FormatDiff(diff, p.maxDiffSize)
+	fileStr := p.diffFormatter.GetFileList(changedFiles)
 
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
-	p.log.Debug("Generating commit message with Ollama: %s", prompt)
+	p.log.Debug("Generating commit message with Ollama: %s", systemPrompt)
 
 	var commitMessage string
 
@@ -74,8 +82,11 @@ func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []strin
 		return nil
 	}
 
+	prompt := fmt.Sprintf("%s\n\n%s", formattedDiff, fileStr)
+
 	req := &api.GenerateRequest{
 		Model:  p.model,
+		System: systemPrompt,
 		Prompt: prompt,
 		Stream: new(bool),
 		Options: map[string]interface{}{
@@ -83,6 +94,7 @@ func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []strin
 			"top_k":             ollamaTopK,
 			"top_p":             ollamaTopP,
 			"num_predict":       ollamaNumPredict,
+			"num_ctx":           ollamaNumCtx,
 			"repeat_penalty":    ollamaRepeatPenalty,
 			"frequency_penalty": ollamaFrequencyPenalty,
 			"presence_penalty":  ollamaPresencePenalty,
@@ -96,46 +108,7 @@ func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []strin
 
 	p.log.Debug("AI response commit message: %s", commitMessage)
 
-	// Extraire le JSON entre les délimiteurs
-	start := strings.Index(commitMessage, "---COMMIT_MESSAGE_START---")
-	end := strings.Index(commitMessage, "---COMMIT_MESSAGE_END---")
-
-	if start == -1 || end == -1 {
-		return "", fmt.Errorf("délimiteur de début ou de fin non trouvé dans la réponse")
-	}
-
-	jsonStr := strings.TrimSpace(commitMessage[start+len("---COMMIT_MESSAGE_START---") : end])
-
-	// Parser le JSON
-	var commit struct {
-		Type        string `json:"type"`
-		Scope       string `json:"scope"`
-		Description string `json:"description"`
-		Body        string `json:"body"`
-		Footer      string `json:"footer"`
-	}
-
-	if err := json.Unmarshal([]byte(jsonStr), &commit); err != nil {
-		return "", fmt.Errorf("erreur lors du parsing du JSON: %w", err)
-	}
-
-	// Construire le message de commit conventionnel
-	message := commit.Type
-	const nullValue = "null"
-	if commit.Scope != nullValue && commit.Scope != "" {
-		message += "(" + commit.Scope + ")"
-	}
-	message += ": " + commit.Description
-
-	if commit.Body != nullValue && commit.Body != "" {
-		message += "\n\n" + commit.Body
-	}
-
-	if commit.Footer != nullValue && commit.Footer != "" {
-		message += "\n\n" + commit.Footer
-	}
-
-	return message, nil
+	return services.AIResponse(commitMessage), nil
 }
 
 // Vérification statique que OllamaProvider implémente bien l'interface AIProvider

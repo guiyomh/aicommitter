@@ -4,6 +4,7 @@ import (
 	"github.com/google/wire"
 	"github.com/guiyomh/aicommitter/internal/domain/services"
 	"github.com/guiyomh/aicommitter/internal/domain/usecases"
+	"github.com/guiyomh/aicommitter/pkg/conventionalcommit"
 )
 
 // ProviderSet is the set of providers for wire to inject the DiffService
@@ -15,8 +16,15 @@ var ProviderSet = wire.NewSet(
 	services.NewDefaultCommitTypeProvider,
 	services.NewDefaultDiffFormatter,
 	services.NewCommitMessageExtractor,
+	ProvideCommitMessageExtractorOptions,
 	wire.Bind(new(services.PromptGenerator), new(*services.ConventionalPromptGenerator)),
 	wire.Bind(new(services.CommitTypeProvider), new(*services.DefaultCommitTypeProvider)),
 	wire.Bind(new(services.PromptTemplateGenerator), new(*services.ConventionTemplateGenerator)),
 	wire.Bind(new(services.DiffFormatter), new(*services.DefaultDiffFormatter)),
 )
+
+func ProvideCommitMessageExtractorOptions() []services.Option {
+	return []services.Option{
+		services.WithParser(conventionalcommit.NewParser()),
+	}
+}

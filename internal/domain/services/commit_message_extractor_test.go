@@ -12,7 +12,7 @@ import (
 func TestCommitMessageExtractor_Extract(t *testing.T) {
 	tests := []struct {
 		name        string
-		response    string
+		response    AIResponse
 		want        *entities.CommitMessage
 		wantErr     bool
 		expectedErr error
@@ -106,11 +106,23 @@ Some text after`,
 		},
 	}
 
-	parser := &MockParser{}
-	extractor := NewCommitMessageExtractor(WithParser(parser))
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			parser := &MockParser{
+				ParseFunc: func(message string) (*conventionalcommit.Commit, error) {
+					if tt.wantErr {
+						return nil, tt.expectedErr
+					}
+					return &conventionalcommit.Commit{
+						Type:        conventionalcommit.Type(tt.want.Type),
+						Scope:       tt.want.Scope,
+						Description: tt.want.Description,
+						Body:        tt.want.Body,
+						Footer:      tt.want.Footer,
+					}, nil
+				},
+			}
+			extractor := NewCommitMessageExtractor(WithParser(parser))
 			got, err := extractor.Extract(tt.response)
 			if tt.wantErr {
 				assert.Error(t, err)
