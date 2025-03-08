@@ -78,6 +78,8 @@ func (p *OllamaProvider) GenerateCommitMessage(diff string, changedFiles []strin
 		return "", fmt.Errorf("error while generating commit message with Ollama: %w", err)
 	}
 
+	p.log.Debug("AI response commit message: %s", commitMessage)
+
 	return strings.TrimSpace(commitMessage), nil
 }
 

@@ -10,10 +10,11 @@ import (
 
 // GenerateCommitMessage is a use case to generate a commit message with the help of an AI
 type GenerateCommitMessage struct {
-	diffService *services.DiffService
-	aiProvider  services.AIProvider
-	config      *config.Config
-	log         utils.Logger
+	diffService            *services.DiffService
+	aiProvider             services.AIProvider
+	config                 *config.Config
+	log                    utils.Logger
+	commitMessageExtractor *services.CommitMessageExtractor
 }
 
 // NewGenerateCommitMessage creates a new instance of the use case
@@ -22,12 +23,14 @@ func NewGenerateCommitMessage(
 	aiProvider services.AIProvider,
 	config *config.Config,
 	log utils.Logger,
+	commitMessageExtractor *services.CommitMessageExtractor,
 ) *GenerateCommitMessage {
 	return &GenerateCommitMessage{
-		diffService: diffService,
-		aiProvider:  aiProvider,
-		config:      config,
-		log:         log,
+		diffService:            diffService,
+		aiProvider:             aiProvider,
+		config:                 config,
+		log:                    log,
+		commitMessageExtractor: commitMessageExtractor,
 	}
 }
 
@@ -55,11 +58,16 @@ func (uc *GenerateCommitMessage) Execute(staged bool) (string, error) {
 		return "", err
 	}
 
-	commitMessage, err := uc.aiProvider.GenerateCommitMessage(diff, changedFiles)
+	iaResponse, err := uc.aiProvider.GenerateCommitMessage(diff, changedFiles)
 
 	if err != nil {
 		return "", err
 	}
 
-	return commitMessage, nil
+	commitMessage, err := uc.commitMessageExtractor.Extract(iaResponse)
+	if err != nil {
+		return "", err
+	}
+
+	return commitMessage.String(), nil
 }

@@ -1,6 +1,8 @@
 package services
 
-import "github.com/guiyomh/aicommitter/internal/domain/config"
+import (
+	"github.com/guiyomh/aicommitter/internal/domain/config"
+)
 
 // PromptGenerator defines the interface for prompt generators
 type PromptGenerator interface {

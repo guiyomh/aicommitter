@@ -14,6 +14,7 @@ var ProviderSet = wire.NewSet(
 	services.NewConventionalTemplateGenerator,
 	services.NewDefaultCommitTypeProvider,
 	services.NewDefaultDiffFormatter,
+	services.NewCommitMessageExtractor,
 	wire.Bind(new(services.PromptGenerator), new(*services.ConventionalPromptGenerator)),
 	wire.Bind(new(services.CommitTypeProvider), new(*services.DefaultCommitTypeProvider)),
 	wire.Bind(new(services.PromptTemplateGenerator), new(*services.ConventionTemplateGenerator)),

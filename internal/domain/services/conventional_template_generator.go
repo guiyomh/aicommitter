@@ -96,8 +96,7 @@ The message MUST be easily parsable, so:
 
 Example response format:
 
-` + "```" + `
----COMMIT_MESSAGE_START---
+` + "```\n" + startDelimiter + `
 {
   "type": "feat",
   "scope": "authentication",
@@ -106,6 +105,5 @@ Example response format:
 		`Adds support for Google sign-in on the login page",
   "footer": "Fixes #456"
 }
----COMMIT_MESSAGE_END---
-` + "```"
+` + endDelimiter + "\n```"
 }
