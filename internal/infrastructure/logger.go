@@ -21,12 +21,21 @@ func NewLogger(config *config.Config) *ZerologLogger {
 	// Configurer le niveau de log
 	logLevel, err := zerolog.ParseLevel(config.Log.Level)
 	if err != nil {
-		// Par défaut, utiliser info en cas d'erreur
-		logLevel = zerolog.InfoLevel
+		logLevel = zerolog.WarnLevel
 	}
 
 	zerolog.SetGlobalLevel(logLevel)
-	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+	log.Logger = log.Output(zerolog.ConsoleWriter{
+		Out:        os.Stderr,
+		NoColor:    false, // Activer les couleurs
+		TimeFormat: "15:04:05",
+		PartsOrder: []string{
+			zerolog.TimestampFieldName,
+			zerolog.LevelFieldName,
+			zerolog.MessageFieldName,
+			zerolog.CallerFieldName,
+		},
+	}).With().Caller().Logger()
 
 	return &ZerologLogger{}
 }
@@ -54,6 +63,11 @@ func (*ZerologLogger) Error(msg string, args ...interface{}) {
 // Fatal records a fatal level message, then terminates the program
 func (*ZerologLogger) Fatal(msg string, args ...interface{}) {
 	log.Fatal().Msg(formatMessage(msg, args...))
+}
+
+// Trace records a trace level message
+func (*ZerologLogger) Trace(msg string, args ...interface{}) {
+	log.Trace().Msg(formatMessage(msg, args...))
 }
 
 // formatMessage formats the message if arguments are supplied
