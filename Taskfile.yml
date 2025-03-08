@@ -109,7 +109,7 @@ tasks:
     deps: [install]
     cmds:
       - "mkdir -p {{.BUILD}}"
-      - "{{.BIN}}/gotestsum --format testname -- -v -coverprofile={{.BUILD}}/coverage.txt {{catLines .GO_PACKAGES}}"
+      - "{{.BIN}}/gotestsum --format testname --junitfile {{.BUILD}}/junit.xml --junitfile-testcase-classname relative -- -v -coverprofile={{.BUILD}}/coverage.txt {{catLines .GO_PACKAGES}}"
     vars:
       GO_PACKAGES:
         sh: go list ./...
