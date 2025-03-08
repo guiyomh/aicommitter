@@ -1,36 +1,42 @@
 package entities
 
-import "fmt"
-
-// CommitMessage représente la structure d'un message de commit conventionnel
+// CommitMessage représente un message de commit conventionnel
 type CommitMessage struct {
 	Type        string `json:"type"`
 	Scope       string `json:"scope,omitempty"`
 	Description string `json:"description"`
 	Body        string `json:"body,omitempty"`
 	Footer      string `json:"footer,omitempty"`
+	Breaking    bool   `json:"breaking,omitempty"`
 }
 
-// String retourne le message de commit formaté selon les conventions
+// String retourne une représentation en chaîne du message de commit
 func (c *CommitMessage) String() string {
-	var commitMsg string
+	var result string
 
-	// Construction de la première ligne (type(scope): description)
+	// Type et scope
+	result = c.Type
 	if c.Scope != "" {
-		commitMsg = fmt.Sprintf("%s(%s): %s", c.Type, c.Scope, c.Description)
-	} else {
-		commitMsg = fmt.Sprintf("%s: %s", c.Type, c.Description)
+		result += "(" + c.Scope + ")"
 	}
 
-	// Ajout du body s'il existe
+	// Breaking change
+	if c.Breaking {
+		result += "!"
+	}
+
+	// Description
+	result += ": " + c.Description
+
+	// Body
 	if c.Body != "" {
-		commitMsg += "\n\n" + c.Body
+		result += "\n\n" + c.Body
 	}
 
-	// Ajout du footer s'il existe
+	// Footer
 	if c.Footer != "" {
-		commitMsg += "\n\n" + c.Footer
+		result += "\n\n" + c.Footer
 	}
 
-	return commitMsg
+	return result
 }

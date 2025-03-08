@@ -16,94 +16,74 @@ func NewConventionalTemplateGenerator() *ConventionTemplateGenerator {
 }
 
 func (*ConventionTemplateGenerator) GenerateTemplate(commitTypes map[string]config.CommitType) string {
-	return `You are an assistant specialized in generating commit messages following the Conventional Commits format.
+	return `You are a commit message generator.
+Your ONLY task is to analyze the Git diff and generate a conventional commit message.
 
-# Objective
-Generate a descriptive, clear and concise commit message that strictly follows the Conventional Commits specification.
+IMPORTANT: Generate ONLY plain ASCII characters. NO emojis, NO special characters, NO escape sequences.
 
-# Commit Context
+# Input Context
 
-- Git Diff:
-
+## Git Diff:
+` + "```" + `
 %s
-
-- Impacted files: %s
-
-# Constraints and Instructions
-
-## Commit Format
-
-The message MUST follow the format:
-
-` + "```" + `
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
 ` + "```" + `
 
-## Generation Rules
+## Changed Files:
+` + "```" + `
+%s
+` + "```" + `
 
-1. Commit Type Choice
-- Use one of the standard types:
- - ` + strings.Join(
+# Output Format
+YOU MUST OUTPUT EXACTLY THIS FORMAT, WITH NO VARIATIONS:
+
+` + "```\n" + startDelimiter + `
+<type>[(scope)][!]: <description>
+
+[body]
+
+[footer]
+` + endDelimiter + "\n```" + `
+
+# Format Rules
+- Use ONLY plain ASCII characters
+- NO emojis or special characters
+- NO extra spaces or tabs
+- Add a "!" after the scope (before the colon) to indicate a breaking change
+
+# Available Commit Types:
+` + strings.Join(
 		lo.Map(
 			lo.Keys(commitTypes),
 			func(key string, _ int) string {
-				return fmt.Sprintf("%s: %s", key, commitTypes[key].Description)
+				return fmt.Sprintf("- %s: %s", key, commitTypes[key].Description)
 			},
 		),
-		"\n  - ",
+		"\n",
 	) + `
 
-2. Scope (Optional)
+# Content Rules
+1. type: Must be one of the types listed above
+2. scope: Optional. Use parentheses when present. Omit completely if not needed
+3. description: < 50 chars, imperative mood, lowercase start, no period
+4. body: Optional. Use to explain the motivation for the change and contrast it with previous behavior
+5. footer: Optional. Use for referencing issues (e.g., "Fixes #123")
+6. breaking: Add "!" after scope (or type if no scope) to indicate breaking changes
 
-- Indicate the main affected component/module/file
-- Limited to technical or functional scope
+# Critical Instructions
+- OUTPUT ONLY THE COMMIT MESSAGE BETWEEN DELIMITERS
+- NO TEXT BEFORE OR AFTER DELIMITERS
+- USE EXACT DELIMITER SPELLING
+- ENSURE PROPER CONVENTIONAL COMMIT FORMAT
+- USE ONLY ASCII CHARACTERS
 
-3. Description
-
-- Short (< 50 characters)
-- Imperative mood, like "Add/Fix/Modify..."
-- Start with lowercase letter
-- No trailing period
-
-4. Message Body (Optional)
-
-- More detailed explanation if needed
-- Motivation for the change
-- Differences from previous state
-
-5. Footer(s) (Optional)
-
-- Issue references (e.g. "Fixes #123")
-- Meta information
-
-# Additional Instructions
-
-- Be concise and precise
-- Use the diff context to understand the changes
-- If no type is obvious, choose the most appropriate one
-- When in doubt, prefer refactor or chore
-
-# Response Format
-Reply ONLY with the commit message, without any additional text.
-The message MUST be easily parsable, so:
-
-- Use clear delimiters like ---COMMIT_MESSAGE_START--- and ---COMMIT_MESSAGE_END---
-- Include parsable metadata
-
-Example response format:
-
+Example of exact expected format:
 ` + "```\n" + startDelimiter + `
-{
-  "type": "feat",
-  "scope": "authentication",
-  "description": "add login with google oauth",
-  "body": "Implement Google OAuth integration for user authentication\n` +
-		`Adds support for Google sign-in on the login page",
-  "footer": "Fixes #456"
-}
-` + endDelimiter + "\n```"
+feat(auth)!: add google oauth login
+
+Implement Google OAuth for user authentication
+Add sign-in button to login page
+
+Fixes #123
+` + endDelimiter + "\n```" + `
+`
 }

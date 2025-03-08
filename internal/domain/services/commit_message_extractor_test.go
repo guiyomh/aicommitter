@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/guiyomh/aicommitter/internal/domain/entities"
+	"github.com/guiyomh/aicommitter/pkg/conventionalcommit"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -30,7 +31,7 @@ func TestCommitMessageExtractor_Extract(t *testing.T) {
 ---COMMIT_MESSAGE_END---
 Some text after`,
 			want: &entities.CommitMessage{
-				Type:        "feat",
+				Type:        string(conventionalcommit.TypeFeat),
 				Scope:       "auth",
 				Description: "add google login",
 				Body:        "Implement Google OAuth integration",
@@ -44,7 +45,7 @@ Some text after`,
 {"type":"fix","description":"correct typo"}
 ---COMMIT_MESSAGE_END---`,
 			want: &entities.CommitMessage{
-				Type:        "fix",
+				Type:        string(conventionalcommit.TypeFix),
 				Description: "correct typo",
 			},
 			wantErr: false,
@@ -105,7 +106,8 @@ Some text after`,
 		},
 	}
 
-	extractor := NewCommitMessageExtractor()
+	parser := &MockParser{}
+	extractor := NewCommitMessageExtractor(WithParser(parser))
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -113,7 +115,8 @@ Some text after`,
 			if tt.wantErr {
 				assert.Error(t, err)
 				if tt.expectedErr != nil {
-					if ve, ok := tt.expectedErr.(*ValidationError); ok {
+					var ve *ValidationError
+					if errors.As(tt.expectedErr, &ve) {
 						// Pour les erreurs de validation, on vérifie le type et les champs
 						var gotVe *ValidationError
 						if assert.ErrorAs(t, err, &gotVe) {

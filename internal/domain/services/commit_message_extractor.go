@@ -2,10 +2,11 @@ package services
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"strings"
 
 	"github.com/guiyomh/aicommitter/internal/domain/entities"
+	"github.com/guiyomh/aicommitter/pkg/conventionalcommit"
 )
 
 const (
@@ -13,78 +14,82 @@ const (
 	endDelimiter   = "---COMMIT_MESSAGE_END---"
 )
 
-// Erreurs personnalisées pour l'extracteur
 var (
-	ErrMissingStartDelimiter = fmt.Errorf("délimiteur de début non trouvé dans la réponse")
-	ErrMissingEndDelimiter   = fmt.Errorf("délimiteur de fin non trouvé dans la réponse")
-	ErrInvalidJSON           = fmt.Errorf("le contenu extrait n'est pas un JSON valide")
+	ErrInvalidJSON           = errors.New("json invalide")
+	ErrMissingStartDelimiter = errors.New("délimiteur de début manquant")
+	ErrMissingEndDelimiter   = errors.New("délimiteur de fin manquant")
 )
 
-// ValidationError représente une erreur de validation du message de commit
+// ValidationError représente une erreur de validation des champs
 type ValidationError struct {
 	Field   string
 	Message string
 }
 
 func (e *ValidationError) Error() string {
-	return fmt.Sprintf("validation du champ '%s': %s", e.Field, e.Message)
+	return e.Message
 }
 
-// NewValidationError crée une nouvelle erreur de validation
-func NewValidationError(field, message string) *ValidationError {
-	return &ValidationError{
-		Field:   field,
-		Message: message,
+// CommitMessageExtractor extrait un message de commit à partir d'une réponse
+type CommitMessageExtractor struct {
+	parser conventionalcommit.Parser
+}
+
+// Option est une fonction qui configure le CommitMessageExtractor
+type Option func(*CommitMessageExtractor)
+
+// WithParser configure le parser à utiliser
+func WithParser(parser conventionalcommit.Parser) Option {
+	return func(e *CommitMessageExtractor) {
+		e.parser = parser
 	}
 }
-
-// CommitMessageExtractor extrait et convertit le message de commit de la réponse de l'IA
-type CommitMessageExtractor struct{}
 
 // NewCommitMessageExtractor crée une nouvelle instance de CommitMessageExtractor
-func NewCommitMessageExtractor() *CommitMessageExtractor {
-	return &CommitMessageExtractor{}
+func NewCommitMessageExtractor(opts ...Option) *CommitMessageExtractor {
+	e := &CommitMessageExtractor{
+		parser: conventionalcommit.NewParser(),
+	}
+	for _, opt := range opts {
+		opt(e)
+	}
+	return e
 }
 
-// validateCommitMessage vérifie que les champs requis sont présents
-func (e *CommitMessageExtractor) validateCommitMessage(msg *entities.CommitMessage) error {
-	if msg.Type == "" {
-		return NewValidationError("type", "le champ est requis")
-	}
-	if msg.Description == "" {
-		return NewValidationError("description", "le champ est requis")
-	}
-	return nil
-}
-
-// Extract extrait et convertit le message de commit de la réponse de l'IA en entité CommitMessage
-func (e *CommitMessageExtractor) Extract(aiResponse string) (*entities.CommitMessage, error) {
-	// Trouver l'index du début du message
-	startIndex := strings.Index(aiResponse, startDelimiter)
+// Extract extrait un message de commit à partir d'une réponse
+func (e *CommitMessageExtractor) Extract(response string) (*entities.CommitMessage, error) {
+	startIndex := strings.Index(response, startDelimiter)
 	if startIndex == -1 {
 		return nil, ErrMissingStartDelimiter
 	}
-	startIndex += len(startDelimiter)
 
-	// Trouver l'index de fin du message
-	endIndex := strings.Index(aiResponse, endDelimiter)
+	endIndex := strings.Index(response, endDelimiter)
 	if endIndex == -1 {
 		return nil, ErrMissingEndDelimiter
 	}
 
-	// Extraire le contenu entre les délimiteurs
-	content := strings.TrimSpace(aiResponse[startIndex:endIndex])
-
-	// Convertir en entité CommitMessage
-	var commitMessage entities.CommitMessage
-	if err := json.Unmarshal([]byte(content), &commitMessage); err != nil {
-		return nil, fmt.Errorf("%w: %s", ErrInvalidJSON, err)
+	jsonStr := strings.TrimSpace(response[startIndex+len(startDelimiter) : endIndex])
+	var commit entities.CommitMessage
+	if err := json.Unmarshal([]byte(jsonStr), &commit); err != nil {
+		return nil, ErrInvalidJSON
 	}
 
-	// Valider les champs requis
-	if err := e.validateCommitMessage(&commitMessage); err != nil {
+	// Validation des champs requis
+	if commit.Type == "" {
+		return nil, &ValidationError{Field: "type", Message: "le champ est requis"}
+	}
+	if commit.Description == "" {
+		return nil, &ValidationError{Field: "description", Message: "le champ est requis"}
+	}
+
+	// Validation du type de commit via le parser
+	_, err := e.parser.Parse(commit.String())
+	if err != nil {
+		if conventionalcommit.IsValidationError(err) {
+			return nil, &ValidationError{Field: "type", Message: "type de commit invalide"}
+		}
 		return nil, err
 	}
 
-	return &commitMessage, nil
+	return &commit, nil
 }
