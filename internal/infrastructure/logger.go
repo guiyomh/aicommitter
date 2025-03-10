@@ -10,10 +10,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-// ZerologLogger is an implementation of the Logger interface using zerolog
+// ZerologLogger est une implémentation de l'interface Logger utilisant zerolog
 type ZerologLogger struct{}
 
-// NewLogger configures and creates a new instance of ZerologLogger
+// NewLogger configure et crée une nouvelle instance de ZerologLogger
 func NewLogger(config *config.Config) *ZerologLogger {
 	// Configurer zerolog
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
@@ -21,56 +21,42 @@ func NewLogger(config *config.Config) *ZerologLogger {
 	// Configurer le niveau de log
 	logLevel, err := zerolog.ParseLevel(config.Log.Level)
 	if err != nil {
-		logLevel = zerolog.WarnLevel
+		// Par défaut, utiliser info en cas d'erreur
+		logLevel = zerolog.InfoLevel
 	}
 
 	zerolog.SetGlobalLevel(logLevel)
-	log.Logger = log.Output(zerolog.ConsoleWriter{
-		Out:        os.Stderr,
-		NoColor:    false, // Activer les couleurs
-		TimeFormat: "15:04:05",
-		PartsOrder: []string{
-			zerolog.TimestampFieldName,
-			zerolog.LevelFieldName,
-			zerolog.MessageFieldName,
-			zerolog.CallerFieldName,
-		},
-	}).With().Caller().Logger()
+	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
 	return &ZerologLogger{}
 }
 
-// Debug records a debug level message
-func (*ZerologLogger) Debug(msg string, args ...interface{}) {
+// Debug enregistre un message de niveau debug
+func (l *ZerologLogger) Debug(msg string, args ...interface{}) {
 	log.Debug().Msg(formatMessage(msg, args...))
 }
 
-// Info records an info level message
-func (*ZerologLogger) Info(msg string, args ...interface{}) {
+// Info enregistre un message de niveau info
+func (l *ZerologLogger) Info(msg string, args ...interface{}) {
 	log.Info().Msg(formatMessage(msg, args...))
 }
 
-// Warn records a warn level message
-func (*ZerologLogger) Warn(msg string, args ...interface{}) {
+// Warn enregistre un message de niveau warn
+func (l *ZerologLogger) Warn(msg string, args ...interface{}) {
 	log.Warn().Msg(formatMessage(msg, args...))
 }
 
-// Error records an error level message
-func (*ZerologLogger) Error(msg string, args ...interface{}) {
+// Error enregistre un message de niveau error
+func (l *ZerologLogger) Error(msg string, args ...interface{}) {
 	log.Error().Msg(formatMessage(msg, args...))
 }
 
-// Fatal records a fatal level message, then terminates the program
-func (*ZerologLogger) Fatal(msg string, args ...interface{}) {
+// Fatal enregistre un message de niveau fatal puis termine le programme
+func (l *ZerologLogger) Fatal(msg string, args ...interface{}) {
 	log.Fatal().Msg(formatMessage(msg, args...))
 }
 
-// Trace records a trace level message
-func (*ZerologLogger) Trace(msg string, args ...interface{}) {
-	log.Trace().Msg(formatMessage(msg, args...))
-}
-
-// formatMessage formats the message if arguments are supplied
+// formatMessage formate le message si des arguments sont fournis
 func formatMessage(msg string, args ...interface{}) string {
 	if len(args) > 0 {
 		return fmt.Sprintf(msg, args...)
@@ -78,5 +64,5 @@ func formatMessage(msg string, args ...interface{}) string {
 	return msg
 }
 
-// Check static that ZerologLogger implements the Logger interface
+// Vérification statique que ZerologLogger implémente bien l'interface Logger
 var _ utils.Logger = (*ZerologLogger)(nil)

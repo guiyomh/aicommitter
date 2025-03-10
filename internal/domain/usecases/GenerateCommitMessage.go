@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/guiyomh/aicommitter/internal/domain/config"
+	"github.com/guiyomh/aicommitter/internal/domain/models"
 	"github.com/guiyomh/aicommitter/internal/domain/services"
 	"github.com/guiyomh/aicommitter/internal/domain/utils"
 )
@@ -34,7 +35,7 @@ func NewGenerateCommitMessage(
 	}
 }
 
-func (uc *GenerateCommitMessage) Execute(staged bool) (string, error) {
+func (uc *GenerateCommitMessage) Execute(staged bool) (*models.CommitMessage, error) {
 	var diff string
 	var err error
 
@@ -46,28 +47,22 @@ func (uc *GenerateCommitMessage) Execute(staged bool) (string, error) {
 
 	uc.log.Debug("Diff: %s", diff)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	if len(diff) == 0 {
-		return "", fmt.Errorf("no changes to commit")
+		return nil, fmt.Errorf("no changes to commit")
 	}
 
 	changedFiles, err := uc.diffService.GetFilesChanged()
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	iaResponse, err := uc.aiProvider.GenerateCommitMessage(diff, changedFiles)
-
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	commitMessage, err := uc.commitMessageExtractor.Extract(iaResponse)
-	if err != nil {
-		return "", err
-	}
-
-	return commitMessage.String(), nil
+	return uc.commitMessageExtractor.Extract(iaResponse)
 }

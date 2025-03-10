@@ -12,7 +12,7 @@ func NewOllamaProvider(
 	config *config.Config,
 	promptGenerator services.PromptGenerator,
 	log utils.Logger,
-	diffFormatter services.DiffFormatter,
+	diff services.DiffFormatter,
 	commitTypeProvider services.CommitTypeProvider,
 ) (*ai.OllamaProvider, error) {
 	return ai.NewOllamaProvider(
@@ -21,7 +21,7 @@ func NewOllamaProvider(
 		config.Git.MaxDiffSize,
 		promptGenerator,
 		log,
-		diffFormatter,
+		diff,
 		commitTypeProvider,
 	)
 }

@@ -4,13 +4,15 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/guiyomh/aicommitter/internal/domain/entities"
+	"github.com/guiyomh/aicommitter/internal/domain/models"
 	"github.com/guiyomh/aicommitter/pkg/conventionalcommit"
 )
 
 const (
 	startDelimiter = "---COMMIT_MESSAGE_START---"
 	endDelimiter   = "---COMMIT_MESSAGE_END---"
+	// DefaultCommitType is used when the commit type is invalid or not provided
+	DefaultCommitType = "chore"
 )
 
 var (
@@ -55,27 +57,59 @@ func NewCommitMessageExtractor(opts ...Option) *CommitMessageExtractor {
 	return e
 }
 
-// Extract extrait un message de commit à partir d'une réponse
-func (e *CommitMessageExtractor) Extract(response AIResponse) (*entities.CommitMessage, error) {
+// Extract extracts a commit message from an AI response
+func (e *CommitMessageExtractor) Extract(response AIResponse) (*models.CommitMessage, error) {
 	rawResponse := string(response)
-
-	// Validation du type de commit via le parser
+	// Try to parse the full commit message
 	parsedCommit, err := e.parser.Parse(strings.TrimSpace(rawResponse))
-	if err != nil {
-		if conventionalcommit.IsValidationError(err) {
-			return nil, &ValidationError{Field: "type", Message: "type de commit invalide"}
+	if err == nil {
+		return &models.CommitMessage{
+			Type:        string(parsedCommit.Type),
+			Scope:       parsedCommit.Scope,
+			Description: parsedCommit.Description,
+			Body:        parsedCommit.Body,
+			Footer:      parsedCommit.Footer,
+			Breaking:    parsedCommit.Breaking,
+		}, nil
+	}
+
+	// If parsing failed, check if we have partial information
+	if conventionalcommit.IsValidationError(err) {
+		validationErr := conventionalcommit.GetValidationError(err)
+		if validationErr.PartialCommit != nil {
+			// Create a commit message with the partial information
+			commitMsg := &models.CommitMessage{
+				Type:        DefaultCommitType, // Use default type unless we have a valid one
+				Description: validationErr.PartialCommit.Description,
+				Scope:       validationErr.PartialCommit.Scope,
+				Body:        validationErr.PartialCommit.Body,
+				Footer:      validationErr.PartialCommit.Footer,
+				Breaking:    validationErr.PartialCommit.Breaking,
+			}
+
+			// If we have a valid type from partial parsing, use it
+			if validationErr.PartialCommit.Type != "" {
+				commitMsg.Type = string(validationErr.PartialCommit.Type)
+			}
+
+			return commitMsg, nil
 		}
-		return nil, err
 	}
 
-	commit := entities.CommitMessage{
-		Type:        string(parsedCommit.Type),
-		Scope:       parsedCommit.Scope,
-		Description: parsedCommit.Description,
-		Body:        parsedCommit.Body,
-		Footer:      parsedCommit.Footer,
-		Breaking:    parsedCommit.Breaking,
-	}
+	// If we have no partial information, return the error
+	return nil, err
+}
 
-	return &commit, nil
+func isValidType(t string) bool {
+	validTypes := []string{
+		"feat", "fix", "docs", "style", "refactor",
+		"perf", "test", "build", "ci", "chore", "revert",
+	}
+	t = strings.TrimSpace(strings.ToLower(t))
+	for _, vt := range validTypes {
+		if t == vt {
+			return true
+		}
+	}
+	return false
 }
