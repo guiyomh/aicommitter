@@ -12,3 +12,7 @@ packages:
         config:
             all: true
             dir: "internal/mocks/services"
+    github.com/guiyomh/aicommitter/pkg/conventionalcommit:
+        config:
+            all: true
+            dir: "pkg/conventionalcommit/mocks"

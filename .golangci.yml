@@ -87,4 +87,9 @@ issues:
         - mnd
         - lll
         - testifylint
+    - path: pkg/conventionalcommit/parser.go
+      linters:
+        - godox
+
+
 

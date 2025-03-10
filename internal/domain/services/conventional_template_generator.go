@@ -16,96 +16,38 @@ func NewConventionalTemplateGenerator() *ConventionTemplateGenerator {
 }
 
 func (*ConventionTemplateGenerator) GenerateTemplate(commitTypes map[string]config.CommitType) string {
-	return `You are an assistant specialized in generating commit messages following the Conventional Commits format.
-
-# Objective
-Generate a descriptive, clear and concise commit message that strictly follows the Conventional Commits specification.
-
-# Commit Context
-
-- Git Diff:
-
-%s
-
-- Impacted files: %s
-
-# Constraints and Instructions
-
-## Commit Format
-
-The message MUST follow the format:
-
-` + "```" + `
-<type>[optional scope]: <description>
-
-[optional body]
-
-[optional footer(s)]
-` + "```" + `
-
-## Generation Rules
-
-1. Commit Type Choice
-- Use one of the standard types:
- - ` + strings.Join(
-		lo.Map(
-			lo.Keys(commitTypes),
-			func(key string, _ int) string {
-				return fmt.Sprintf("%s: %s", key, commitTypes[key].Description)
-			},
+	return strings.Join([]string{
+		"You are a helpful assistant specializing in writing clear and informative Git commit messages using the Conventional Commits style.",
+		"Based on the given Git diff and changed files, generate exactly one conventional commit message following these guidelines:",
+		"",
+		"1. Message Language: English",
+		"2. Format: follow the Conventional Commits format:",
+		"    <type>(<optional scope>): <description>",
+		"    ",
+		"    <optional body>",
+		"    ",
+		"    <optional footer>",
+		"    ",
+		"3. Types: use one of the following types:",
+		strings.Join(
+			lo.Map(
+				lo.Keys(commitTypes),
+				func(key string, _ int) string {
+					return fmt.Sprintf("   - %s: %s", key, commitTypes[key].Description)
+				},
+			),
+			"\n",
 		),
-		"\n  - ",
-	) + `
-
-2. Scope (Optional)
-
-- Indicate the main affected component/module/file
-- Limited to technical or functional scope
-
-3. Description
-
-- Short (< 50 characters)
-- Imperative mood, like "Add/Fix/Modify..."
-- Start with lowercase letter
-- No trailing period
-
-4. Message Body (Optional)
-
-- More detailed explanation if needed
-- Motivation for the change
-- Differences from previous state
-
-5. Footer(s) (Optional)
-
-- Issue references (e.g. "Fixes #123")
-- Meta information
-
-# Additional Instructions
-
-- Be concise and precise
-- Use the diff context to understand the changes
-- If no type is obvious, choose the most appropriate one
-- When in doubt, prefer refactor or chore
-
-# Response Format
-Reply ONLY with the commit message, without any additional text.
-The message MUST be easily parsable, so:
-
-- Use clear delimiters like ---COMMIT_MESSAGE_START--- and ---COMMIT_MESSAGE_END---
-- Include parsable metadata
-
-Example response format:
-
-` + "```" + `
----COMMIT_MESSAGE_START---
-{
-  "type": "feat",
-  "scope": "authentication",
-  "description": "add login with google oauth",
-  "body": "Implement Google OAuth integration for user authentication\n` +
-		`Adds support for Google sign-in on the login page",
-  "footer": "Fixes #456"
-}
----COMMIT_MESSAGE_END---
-` + "```"
+		"4. Guidelines for writing commit messages:",
+		"   - Be specific about what changes were made",
+		"   - Use imperative mood (\"add feature\" not \"added feature\")",
+		"   - Keep subject line under 50 characters",
+		"   - Do not end the subject line with a period",
+		"   - Use the body to explain what and why vs. how",
+		"5. Focus on:",
+		"   - What problem this commit solves",
+		"   - Why this change was necessary",
+		"   - Any important technical details",
+		"6. Exclude anything unnecessary such as translation or implementation details.",
+	}, "\n")
 }
