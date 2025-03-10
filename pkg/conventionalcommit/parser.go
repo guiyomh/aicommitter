@@ -22,9 +22,22 @@ func NewParser() Parser {
 	return &DefaultParser{}
 }
 
+// ValidationErrorType représente le type d'erreur de validation
+type ValidationErrorType int
+
+const (
+	InvalidFormat ValidationErrorType = iota
+	InvalidType
+	EmptyDescription
+	InvalidScope
+)
+
 // ValidationError represents an error that occurs during commit message validation
 type ValidationError struct {
+	Type    ValidationErrorType
 	Message string
+	// Parsed information that was valid
+	PartialCommit *Commit
 }
 
 func (e *ValidationError) Error() string {
@@ -35,6 +48,15 @@ func (e *ValidationError) Error() string {
 func IsValidationError(err error) bool {
 	var validationErr *ValidationError
 	return errors.As(err, &validationErr)
+}
+
+// GetValidationError returns the ValidationError if the error is a ValidationError
+func GetValidationError(err error) *ValidationError {
+	var validationErr *ValidationError
+	if errors.As(err, &validationErr) {
+		return validationErr
+	}
+	return nil
 }
 
 var (
@@ -84,28 +106,60 @@ type Commit struct {
 }
 
 // Parse analyzes a commit message and returns a Commit structure.
-// Returns an error if the message format is invalid.
+// Returns a ValidationError with partial information if the message format is invalid.
 func (p *DefaultParser) Parse(message string) (*Commit, error) {
 	lines := strings.Split(message, "\n")
 	if len(lines) == 0 {
-		return nil, fmt.Errorf("empty commit message: %w", ErrInvalidFormat)
+		return nil, &ValidationError{
+			Type:    InvalidFormat,
+			Message: "empty commit message",
+		}
+	}
+
+	// Initialize partial commit for error cases
+	partialCommit := &Commit{
+		Breaking: false,
 	}
 
 	// Parse the first line (header)
 	matches := commitPattern.FindStringSubmatch(lines[0])
 	if matches == nil {
-		return nil, fmt.Errorf("malformed commit message header: %w", ErrInvalidFormat)
+		// Try to salvage description at least
+		partialCommit.Description = strings.TrimSpace(lines[0])
+		return nil, &ValidationError{
+			Type:          InvalidFormat,
+			Message:       "malformed commit message header",
+			PartialCommit: partialCommit,
+		}
 	}
 
 	commitType := Type(strings.ToLower(matches[1]))
 	if !commitType.IsValid() {
-		return nil, &ValidationError{Message: fmt.Sprintf("invalid commit type: %s", commitType)}
+		partialCommit.Description = matches[3]
+		partialCommit.Scope = matches[2]
+		return nil, &ValidationError{
+			Type:          InvalidType,
+			Message:       fmt.Sprintf("invalid commit type: %s", commitType),
+			PartialCommit: partialCommit,
+		}
+	}
+
+	description := strings.TrimSpace(matches[3])
+	if description == "" {
+		return nil, &ValidationError{
+			Type:    EmptyDescription,
+			Message: "empty commit description",
+			PartialCommit: &Commit{
+				Type:  commitType,
+				Scope: matches[2],
+			},
+		}
 	}
 
 	commit := &Commit{
 		Type:        commitType,
 		Scope:       matches[2],
-		Description: matches[3],
+		Description: description,
 		Breaking:    strings.Contains(lines[0], "!"),
 	}
 
